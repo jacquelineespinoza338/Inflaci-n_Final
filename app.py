@@ -538,7 +538,7 @@ with tab2:
     future_dates = pd.date_range(
         start=df_f["fecha"].max(),
         periods=future_steps + 1,
-        freq="M"
+        freq="ME"
     )[1:]
 
     future_X = np.arange(
