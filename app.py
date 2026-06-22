@@ -596,27 +596,115 @@ with tab2:
     Regresión Lineal y presenta una proyección estimada para los próximos seis meses,
     permitiendo visualizar la posible tendencia futura del indicador.
     """)
+# =====================
+    # CORRELACIÓN DE PEARSON
     # =====================
-    # CORRELACIÓN (SIN CAMBIOS)
-    # =====================
-    st.subheader("📉 Correlación (Pearson)")
+    st.subheader("📉 Correlación de Pearson")
 
-    df_numeric = df_f.select_dtypes(include="number")
+    correlacion = df_f["valor"].corr(df_f["prediccion"])
 
-    st.write(df_numeric.corr())
+    # Resultado
+    st.metric(
+        "Coeficiente de correlación",
+        round(correlacion, 4)
+    )
 
-    st.success("""
-    ¿Por qué se utiliza la correlación de Pearson?
+    # Tabla utilizada
+    st.subheader("📋 Datos utilizados para el cálculo")
 
-    Se utiliza porque las variables analizadas son numéricas y este coeficiente mide
-    la fuerza y dirección de la relación lineal entre ellas.
+    tabla_corr = df_f[["nombre_mes", "valor", "prediccion"]].copy()
 
-    Un valor cercano a 1 indica una relación positiva fuerte, cercano a -1 una relación
-    negativa fuerte y cercano a 0 indica poca o ninguna relación lineal.
+    tabla_corr.columns = [
+        "Mes",
+        "Inflación Real",
+        "Predicción del Modelo"
+    ]
+
+    st.dataframe(tabla_corr, use_container_width=True)
+
+    # Interpretación automática
+    if correlacion > 0.8:
+        st.success("✅ Existe una relación muy fuerte entre los datos reales y la predicción.")
+    elif correlacion > 0.4:
+        st.warning("⚠️ Existe una relación moderada entre los datos reales y la predicción.")
+    else:
+        st.error("❌ Existe una relación débil entre los datos reales y la predicción.")
+
+    # Explicación
+    st.info(f"""
+    ### ¿Qué es la Correlación de Pearson?
+
+    La correlación de Pearson es una medida estadística utilizada para determinar el grado de relación lineal entre dos variables numéricas.
+
+    En este proyecto se emplea para comparar los valores reales de inflación con los valores estimados por el modelo de Regresión Lineal.
+
+    ### Resultado obtenido
+
+    El coeficiente calculado fue de **{round(correlacion,4)}**.
+
+    Este resultado indica que existe una relación positiva entre los datos reales y las predicciones generadas por el modelo. Sin embargo, la relación no es perfecta debido a que la inflación puede verse afectada por múltiples factores económicos que generan fluctuaciones difíciles de representar mediante una regresión lineal simple.
+
+    ### Escala de interpretación
+
+    📌 1.00 = Relación positiva perfecta
+
+    📌 0.80 - 0.99 = Relación fuerte
+
+    📌 0.40 - 0.79 = Relación moderada
+
+    📌 0.00 - 0.39 = Relación débil
+
+    📌 -1.00 = Relación negativa perfecta
     """)
 
     st.divider()
 
+    st.subheader("📊 Relación entre valores reales y predicción")
+
+    fig_pearson = px.scatter(
+    df_f,
+    x="valor",
+    y="prediccion",
+    text="nombre_mes",
+    title="Correlación de Pearson"
+    )
+
+    fig_pearson.update_layout(
+    xaxis_title="Inflación Real (%)",
+    yaxis_title="Predicción (%)"
+    )
+
+    st.plotly_chart(fig_pearson, use_container_width=True)
+
+    mes_pearson = st.selectbox(
+    "Selecciona un mes",
+    df_f["nombre_mes"]
+    )
+
+    dato = df_f[df_f["nombre_mes"] == mes_pearson]
+
+    st.write(dato[["nombre_mes","valor","prediccion"]])
+
+    df_f["error"] = abs(df_f["valor"] - df_f["prediccion"])
+
+    st.subheader("📉 Error entre valor real y predicción")
+
+    st.dataframe(
+    df_f[["nombre_mes","valor","prediccion","error"]],
+    use_container_width=True
+    )
+
+    import plotly.express as px
+
+    corr_matrix = df_f[["valor","prediccion"]].corr()
+
+    fig_corr = px.imshow(
+    corr_matrix,
+    text_auto=True,
+    title="Mapa de Correlación"
+    )
+
+    st.plotly_chart(fig_corr, use_container_width=True)
     # =====================
     # INSIGHT AUTOMÁTICO (SIN CAMBIOS)
     # =====================
